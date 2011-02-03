@@ -1,53 +1,65 @@
-(for (item index array) body...)
+It's very important that iteration is (or at least can be) as
+fast as javascript.
 
-(let ((_ref [])
-      (_ls  array)
-      (_len array.length)
-      (_i  0))
+So here's what I imagine it looking like in hubrisp.
 
-    (js:while (js:< _i _len)
-        (js:set! item (js:subscript ls _i))
-        (js:set! index _i)
-        (js:set! (js:subscript _ref _i) 
-                 (begin body...))
-        (js:++ _i))
+    (for (item index array) body...)
 
-    _ref)
+And then in hubrisp primitives (that is, after macroexpansion).
 
-(function (_ref, _ls, _len, _i) {
-    while (_i < _len) {
-       item  = _ls[_i];
-       index = _i;
-       _ref[_i] = (function () {
-            body...
-       }());
-    }
-    return _ref;
-}([], array, array.length, 0));
+    (let ((_ref [])
+          (_ls  array)
+          (_len array.length)
+          (_i  0))
 
-(for (key value :in array) body...)
+        (js:while (js:< _i _len)
+            (js:set! item (js:subscript ls _i))
+            (js:set! index _i)
+            (js:set! (js:subscript _ref _i) 
+                     (begin body...))
+            (js:++ _i))
 
-(let ((_ref {})
-      (_obj object)
-      (_key)
-      (item))
+        _ref)
 
-    (js:for-in (_key object)
-        (js:set! item (js:subscript _obj _key))
-        (js:set! key _key)
-        (js:set! (js:subscript _ref _key)
-                 (begin body...)))
+And the javascript that gets emitted.
 
-    _ref)
+    (function (_ref, _ls, _len, _i) {
+        while (_i < _len) {
+           item  = _ls[_i];
+           index = _i;
+           _ref[_i] = (function () {
+                body...
+           }());
+        }
+        return _ref;
+    }([], array, array.length, 0));
 
-(function (_ref, _obj, _key, item){
-    for (_key in _obj) if (_obj.hasOwnProperty(_key)) {
-       item = _obj[_key];
-       key  = _key;
-       _ref[_key] = (function () {
-            body... 
-        }());
-    }
+And a similar trio for iterating over primitive 
+javascript Objects.
 
-    return _ref;
-}({}, object))
+    (for (key value :in object) body...)
+
+    (let ((_ref {})
+          (_obj object)
+          (_key)
+          (item))
+
+        (js:for-in (_key object)
+            (js:set! item (js:subscript _obj _key))
+            (js:set! key _key)
+            (js:set! (js:subscript _ref _key)
+                     (begin body...)))
+
+        _ref)
+
+    (function (_ref, _obj, _key, item){
+        for (_key in _obj) if (_obj.hasOwnProperty(_key)) {
+           item = _obj[_key];
+           key  = _key;
+           _ref[_key] = (function () {
+                body... 
+            }());
+        }
+
+        return _ref;
+    }({}, object))
