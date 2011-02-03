@@ -1,0 +1,41 @@
+GLisp
+====
+
+I think there should be a (practical) lisp that compiles to javascript,
+and provides alot of the shit that Clojure provides to the Java world:
+host language interop, convenient lambdas (with implicit args), multimethods,
+a sequence interface/library, macros, immutable containers, and applicable types.
+
+    ;; Interop
+    (.. foo bar baz)
+    (.Constructor arg)
+
+    ;; Convenient lambda
+    #(.toString %)
+
+    ;; Applying a regex to a str
+    (#/^[a-z]{3}:/ str)
+
+Literals for all the native JS types.
+
+    [1 2 3 4]      ;; Array
+    { :key value } ;; Object
+    (1 2 3 4)      ;; List?
+
+Alot of shit that Coffeescript provides: classes, native (fast!!!) iteration,
+destructuring bind, and a self hosting compiler, a "this" reference syntax.
+
+    ;; destructuring bind against various types
+    (define (a b . c) ls)
+    (define { :length a, :height b } ls) ;; options commas?
+    (define (.LazyList a b) ls
+
+    (Class Rectangle (@x @y)
+      (def-method (area)
+       (* @x @y)))
+
+Some of the junk I've enjoyed from Racket: contracts, a decent module system,
+pattern-matching constructs, hygenic macros would be amazing.
+
+A bunch of shit from Mootools, usable Class introspection, a standard library with
+Events, Options and upcoming features from the future javascripts e.g Object.keys. 
