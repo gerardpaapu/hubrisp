@@ -1,0 +1,217 @@
+Optimizations
+=============
+
+    Premature optimization is the mother of all fuck ups
+                                        
+                                         -- Steven Segal
+
+I would expect (idiomatic) hubrisp to be both more expressive, and to
+produce faster (though perhaps not lighter) executables than idiomatic
+javascript.
+
+The worst sin of all is optimization before profiling, code based
+purely on rumors on hearsay.
+
+Reducing privacy functions
+--------------------------
+
+When a function is used purely for its scope, I feel like it could be
+replaced by uniquifying all local identifiers (according to their
+lexical depth or whatever?).
+
+    (define a 1)
+
+    (let ((a 7))
+      (console.log a))
+
+    ;---------------------
+
+    var a;
+    a = 1;
+
+    (function (a) {
+        console.log(a);
+    }(7));
+
+    ;---------------------
+
+    var a, _a;
+    a = 1;
+    _a = 7;
+    console.log(_a);
+
+When a function is used to do side effects in an expression context,
+we should be able to replace it with the comma ',' operator 
+(providing we can uniquify the identifiers).
+
+    (define a 
+      (let ((b 5))
+        (* b b b)))
+
+    ;--------------------------
+
+    var a;
+    a = (function (b) {
+        return b * b * b;
+    }(5));
+
+    ;--------------------------
+
+    var a, _b;
+    a = (_b = 5, _b * _b * _b);
+
+Inlining Function Calls
+-----------------------
+
+When can you inline functions? 
+
+Can I always treat functions (or any identifiers type-annotated as
+functions) as immutable?
+
+Can I mark functions as immutable by default and inline them?
+
+    (def (foo bar baz)
+        quux)
+    
+    ;----------------------------
+    
+    (define-with-type
+         foo
+
+         (lambda (bar baz)
+           quuz)
+
+         (Function :immutable))
+
+What about recursive functions?
+
+How can I identify primitive recursion?
+
+Should I try to identify primitive recursion? `while` loops are
+faster in all browsers AFAIK.
+
+    (define (factorial n)
+        (letrec ((fact (lambda (n total)
+                         (if (= n 1)
+                             total
+                             (fact (- n 1)
+                                   (* n total))))))
+            (factorial n 1)))
+    
+    ;----------------------------------------------
+
+    ;; A miracle has occured!
+
+    (define (factorial n)
+        (let ((n n)
+              (total 1))
+          (js:while (not (= n 1))
+              (js:set! n (- n 1))
+              (js:Set! total (* n total)))
+          total))
+
+    ;----------------------------------------------
+
+    var factorial;
+
+    factorial = function (n) {
+        var _n, _total;
+        _n = n;
+        _total = 1;
+
+        while (!(n === 1)) {
+            _n = _n - 1;
+            _total = _n * _total;
+        }
+
+        return total;
+    };     
+
+Compile time method dispatch
+----------------------------
+
+I should be  able to compile time dispatch multimethods (i.e replace
+the Generic call with a call to the correct method) against literals
+and type-annotated identifiers.
+
+This could make it possible for sequence generics (nth, first, rest,
+length) to compile to native javascript expressions on native types.
+
+    (define ls (.List 1 2 3))
+    
+    (define arr [1 2 3])
+
+    ;; Generic function calls
+    (nth ls 2) 
+    (first ls)
+    (rest ls)
+    (length ls)
+
+    (nth arr 2)
+    (first arr)
+    (rest arr)
+    (length arr)
+
+    ;--------------------------------
+
+    (define-with-type 
+        ls
+        (.List 1 2 3)
+        (List))
+
+    (define-with-type
+        arr
+        [1 2 3]
+        (Array))
+
+    ;; Become specific method calls
+    (.nth ls 2)
+    ;; Actually the primitive form of
+    ;; this will probably be more like:
+    ;;
+    ;;     (js:method-call ls :nth 2)
+    ;;
+    (.first ls)
+    (.rest ls)
+    (.getLength ls)
+
+    (js:subscript arr 2)
+    (js:subscript arr 0)
+    (.slice arr 1)
+    ;; see above
+    (js:subscript arr :length) 
+
+    ;--------------------------------
+
+    var ls  // type: List
+      , arr // type: Array
+      ;
+
+    ls   = new List(1, 2, 3);
+    arr  = [1, 2, 3];
+
+    ls.nth(2);
+    ls.first();
+    ls.rest();
+    ls.getLength();
+
+    // Some of which become native js constructs
+    arr[2];
+    arr[0];
+    arr.slice(1);
+    arr.length; // or `arr['length']`
+
+If a function is annotated (I feel like I'm just using that word
+for no reason) with a contract, then we can annotate any identifier
+assigned to the results of calling that function.  
+
+    (require/contract :MATH (add (-> Number Number Number)))
+
+    (define sum (add 2 3))
+
+    ;-------------------------------------------------------
+
+    (define-with-type
+        sum
+        (add 2 3)
+        Number) 

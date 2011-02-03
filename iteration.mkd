@@ -1,4 +1,4 @@
-(for (item index array) . body)
+(for (item index array) body...)
 
 (let ((_ref [])
       (_ls  array)
@@ -25,11 +25,12 @@
     return _ref;
 }([], array, array.length, 0));
 
-(for (key value :in array) . body)
+(for (key value :in array) body...)
 
 (let ((_ref {})
+      (_obj object)
       (_key)
-      (_obj object))
+      (item))
 
     (js:for-in (_key object)
         (js:set! item (js:subscript _obj _key))
