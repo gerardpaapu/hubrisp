@@ -1,0 +1,52 @@
+(for (item index array) . body)
+
+(let ((_ref [])
+      (_ls  array)
+      (_len array.length)
+      (_i  0))
+
+    (js:while (js:< _i _len)
+        (js:set! item (js:subscript ls _i))
+        (js:set! index _i)
+        (js:set! (js:subscript _ref _i) 
+                 (begin body...))
+        (js:++ _i))
+
+    _ref)
+
+(function (_ref, _ls, _len, _i) {
+    while (_i < _len) {
+       item  = _ls[_i];
+       index = _i;
+       _ref[_i] = (function () {
+            body...
+       }());
+    }
+    return _ref;
+}([], array, array.length, 0));
+
+(for (key value :in array) . body)
+
+(let ((_ref {})
+      (_key)
+      (_obj object))
+
+    (js:for-in (_key object)
+        (js:set! item (js:subscript _obj _key))
+        (js:set! key _key)
+        (js:set! (js:subscript _ref _key)
+                 (begin body...)))
+
+    _ref)
+
+(function (_ref, _obj, _key, item){
+    for (_key in _obj) if (_obj.hasOwnProperty(_key)) {
+       item = _obj[_key];
+       key  = _key;
+       _ref[_key] = (function () {
+            body... 
+        }());
+    }
+
+    return _ref;
+}({}, object))
