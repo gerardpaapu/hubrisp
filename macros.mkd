@@ -1,0 +1,7 @@
+I'd really like to have something like what racket has...
+(and perhaps all other R5RS schemes?) their hygenic-macros
+really seem to DWIM, and interact with modules really well.
+
+On the other hand, common-lisp style macros seem to be
+easier to implement... on the OTHER, OTHER hand, it's not
+like I even know how to implement those.

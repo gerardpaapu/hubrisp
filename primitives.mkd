@@ -1,0 +1,23 @@
+The flow for me, seems like it's going to be 
+
+    read --+--> macro expand --> module/id resolution -+--> optimization --> emit-js
+           |                                        |
+           `----------<----------<---------<--------'
+
+    (require :quux) ; the module :quux provides foo
+
+    (set! foo.bar "baz")
+
+    ;------------------------------------------------
+
+    (h:require :quux (foo foo))
+
+    (js:set! (js:subscript foo :bar) "baz")
+
+    ;-------------------------------------------------
+
+    var _gen, foo;
+    _gen = Hubrisp.require("quux");
+    foo  = _gen.provides['foo'];
+
+    foo['bar'] = 'baz'; // wait... why am I mutating another module again?
