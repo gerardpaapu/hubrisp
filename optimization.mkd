@@ -205,6 +205,8 @@ If a function is annotated (I feel like I'm just using that word
 for no reason) with a contract, then we can annotate any identifier
 assigned to the results of calling that function.  
 
+Really I should read a book about type-inference in dynamic languages.
+
     (require/contract :MATH (add (-> Number Number Number)))
 
     (define sum (add 2 3))

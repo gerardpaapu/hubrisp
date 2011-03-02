@@ -30,13 +30,32 @@ destructuring bind, and a self hosting compiler, a "this" reference syntax.
     (define { :length a, :height b } ls) ;; options commas?
     (define (.LazyList a b) ls)
 
-    (Class Rectangle (@x @y)
+    (class Rectangle (@x @y)
       (def-method (area)
        (* @x @y)))
+
+    "multi
+     line
+     strings" ;; FFS...
+
+    """  <-- "these" kinds of strings
+        I'm not sure what they're called...
+    """
+
+    "I'm not sure #{how} I feel #{about} string
+     interpolation in a lisp"
+
+    (format "a ~[ ~s ~] ~s is better right?" `(powerful standard) "format function")
+
+    ("also " " strings " " should magically concat")    
+
+    (map #"~{name}: ~{rank}" players)
+    ;; format strings could be a special applicable type
+    ;; that would be useful
+
+    (#"~{length}: ~{dog}" this)
 
 Some of the junk I've enjoyed from Racket: contracts, a decent module system,
 pattern-matching constructs, hygenic macros would be amazing.
 
 A bunch of shit from Mootools, usable Class introspection, a standard library with Events, Options and upcoming features from the future javascripts e.g Object.keys.
-
-

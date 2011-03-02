@@ -3,33 +3,34 @@ fast as javascript.
 
 So here's what I imagine it looking like in hubrisp.
 
-    (for (item index array) body...)
+    (for (item index array) body ...)
 
 And then in hubrisp primitives (that is, after macroexpansion).
 
     (let ((_ref [])
           (_ls  array)
           (_len array.length)
-          (_i  0))
+          (_i  0)
+          (item)
+          (index))
 
         (js:while (js:< _i _len)
             (js:set! item (js:subscript ls _i))
             (js:set! index _i)
             (js:set! (js:subscript _ref _i) 
-                     (begin body...))
+                     (begin body ...)) ;; except that this isn't 
+                                       ;; expanded obviously
             (js:++ _i))
 
         _ref)
 
 And the javascript that gets emitted.
 
-    (function (_ref, _ls, _len, _i) {
+    (function (_ref, _ls, _len, _i, item, index) {
         while (_i < _len) {
            item  = _ls[_i];
            index = _i;
-           _ref[_i] = (function () {
-                body...
-           }());
+           _ref[_i] = ( (body), ... );
         }
         return _ref;
     }([], array, array.length, 0));
@@ -42,24 +43,125 @@ javascript Objects.
     (let ((_ref {})
           (_obj object)
           (_key)
-          (item))
+          (key)
+          (value))
 
-        (js:for-in (_key object)
-            (js:set! item (js:subscript _obj _key))
-            (js:set! key _key)
-            (js:set! (js:subscript _ref _key)
-                     (begin body...)))
+        (js:for-in (_key _obj)
+            (js:if (js:hasOwn _obj _key)
+                (js:set! key _key)
+                (js:set! value (js:subscript _obj _key))
+                (js:set! (js:subscript _ref _key)
+                         (begin body ...))))
 
         _ref)
 
-    (function (_ref, _obj, _key, item){
-        for (_key in _obj) if (_obj.hasOwnProperty(_key)) {
-           item = _obj[_key];
-           key  = _key;
-           _ref[_key] = (function () {
-                body... 
-            }());
+    (function (_ref, _obj, _key, key, value){
+        for (_key in _obj) {
+            if (({}.hasOwnProperty).call(_obj, _key)) {
+                key   = _key;
+                value = _obj[_key];
+                _ref[_key] = ( (body), ... );
+            }
         }
 
         return _ref;
     }({}, object))
+
+Ideally we should be able to do something similar for first class
+functions map, filter, etc... i.e. compile them as primitives
+
+    (map fn ls ...)
+
+
+    (let ((_i 0)
+          (_len (Math.min ls.length ...))
+          (_ref []))
+
+       (js:while (js:< _i _len)
+            (js:set! (js:subscript _ref _i)
+                     (fn.apply (js:this) 
+                               (js:subscript ls _i)
+                               ...))
+            (js:++ _i))
+        _ref)
+
+
+    (function (_i, _len, _ref) {
+        while (_i < len) {
+            _ref[i] = fn.apply(this, [ls[i], ...]);
+        }
+        return _ref;
+    }(0, Math.min(ls.length, ...), []));
+
+
+    (filter fn ls)
+
+    (let ((_i 0)
+          (_len ls.length)
+          (_ref [])
+          (_val))
+        (js:while (js:< _i _len)
+            (js:set! _val (js:subscript ls _i))
+            (js:if (fn _val)
+                (_ref.push _val))
+            (js:++ _i))
+        _ref)
+    
+    (function (_i, _len, _ref, _val) {
+        while (_i < _len) {
+            _val = ls[_i];
+            if (fn(_val)) {
+                _ref.push(_val); 
+            }
+        }
+        return _ref;
+    }(0, ls.length, []))
+
+    (reduce fn ls seed)
+
+    (let ((_i 0)
+          (_len ls.length)
+          (_seed seed))
+        (js:while (js:< _i _len)
+            (js:set! _seed (fn (js:subscript ls _i)
+                               _seed))
+            (js:++ _i)) 
+        _seed)
+
+    (function (_i, _len, _seed) {
+        while (_i < _len) {
+            _seed = fn(_ls[i], _i);
+            _i++;
+        }
+        return _seed;
+    }(0, ls.length, seed))
+
+
+    (for (item index array :when exp) body ...)
+
+    (let ((_ref [])
+          (_ls  array)
+          (_len array.length)
+          (_i  0)
+          (item)
+          (index))
+
+        (js:while (js:< _i _len)
+            (js:set! item (js:subscript ls _i))
+            (js:set! index _i)
+            (js:if exp
+                (_ref.push (begin body ...)))
+           (js:++ _i))
+
+        _ref)
+
+    (function (_ref, _ls, _len, _i, item, index) {
+        while (_i < _len) {
+            index = _i;
+            item  = _ls[_i];
+            if (exp) {
+                _ref.push(((body), ...));
+            }
+            _i++;
+        }
+    }([], array, array.length, 0))
