@@ -1,0 +1,3 @@
+In theory, I'm attempting to write a practical lisp for "the javascript platform", you can read manifesto.mkd if you're that way inclined.
+
+There's fuck all code there, because... I don't know how to write a compiler... but I won't let that stop me right? I've got the dragon book and lisp in small pieces NOTHING CAN STOP ME.

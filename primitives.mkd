@@ -21,3 +21,50 @@ The flow for me, seems like it's going to be
     foo  = _gen.provides['foo'];
 
     foo['bar'] = 'baz'; // wait... why am I mutating another module again?
+
+
+
+// string -> sexp
+read_sexp: function () {
+    ...
+}
+
+// syntaxify: string, env -> syntax
+// transform the sexp and it's children into 
+// corresponding syntax objects
+//
+// literal -> literal
+// symbol  -> qualified_identifier
+// list    -> application  
+read_syntax: function (string, env) {
+    var sexp = read_sexp(string);
+    ...
+    return stx;
+}
+
+// syntax, env -> primitive_syntax
+// 
+// primitive_syntax is
+// an application of the form (primitive_syntax ...)
+// or a fully qualified identifier to a value of type js:Form
+// or a javascript-safe literal
+// 
+// every js:Form has a direct translation to
+// JavascriptString defined
+// 
+// e.g. (js:if test true_branch false_branch)
+//
+//      if (#{ compile test}) {
+//         #{ compile true_branch }
+//      } else { 
+//         #{ compile false_branch }
+//      }
+
+syntax_expand: function (stx, env) {
+    
+}
+
+// primitive_syntax -> JavascriptString
+emit_js: function () {
+
+} 

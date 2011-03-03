@@ -29,9 +29,10 @@ lexical depth or whatever?).
     var a;
     a = 1;
 
-    (function (a) {
+    (function () {
+        var a = 7;
         console.log(a);
-    }(7));
+    }());
 
     ;---------------------
 
@@ -58,7 +59,7 @@ we should be able to replace it with the comma ',' operator
     ;--------------------------
 
     var a, _b;
-    a = (_b = 5, _b * _b * _b);
+    a = ((_b = 5), (_b * _b * _b));
 
 Inlining Function Calls
 -----------------------

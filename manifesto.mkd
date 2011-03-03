@@ -12,6 +12,8 @@ a sequence interface/library, macros, immutable containers, and applicable types
 
     ;; Convenient lambda
     #(.toString %)
+    ;; %, %1, %2 and friends can expand into
+    ;; arguments[n]
 
     ;; Applying a regex to a str
     (#/^[a-z]{3}:/ str)
@@ -27,7 +29,7 @@ destructuring bind, and a self hosting compiler, a "this" reference syntax.
 
     ;; destructuring bind against various types
     (define (a b . c) ls)
-    (define { :length a, :height b } ls) ;; options commas?
+    (define { :length a, :height b } ls) ;; optional commas?
     (define (.LazyList a b) ls)
 
     (class Rectangle (@x @y)
