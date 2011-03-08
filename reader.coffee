@@ -1,56 +1,77 @@
-class Port 
+class Port
     constructor: (@string, @position=0) ->
 
     position: 0
 
     clone: -> new Port @string, @position
 
-    peek: (n) ->
+    peek: (n=1) ->
         @string.slice @position, @position + n
 
-    read: (n) ->
-        value = peek(n)
-        @position += n
+    read: (n=1) ->
+        value = @peek n
+        @skip n
         value
 
-    skip: -> @position++
+    skip: (n=1) -> @position += n
 
     match: (p) ->
-        pattern = new RegExp p
-        pattern.lastIndex = @position
+        string  = @string[@position..]
+        pattern = new RegExp "^#{p.source}"
+        match   = pattern.exec string
 
+        if match?
+            result = match[0]
+            @position += result.length
+            result
+        else
+            null
 
-read_sexp = (string, ctx) ->
-    switch lookahead(string)
-        when 'space'  then skip_whitespace string, ctx 
-        when 'open'   then read_list string, ctx
-        when 'letter' then read_symbol string, ctx
-        when 'number' then read_number string, ctx
-        else throw new Error "Unexpected #{ string[0] }"
+    skipWhitespace: -> @match /\s+/
 
-lookahead = (string) ->
-    switch string
-        when /^\w+/     then 'space'
-        when /^(/       then 'open'
-        when /^)/       then 'close'
-        when /^[_a-z]/i then 'letter'
-        when /^[0-9]/   then 'number'
+read_sexp = (port) ->
+    switch lookahead(port)
+        when 'open'   then read_list port
+        when 'letter' then read_symbol port
+        when 'number' then read_number port
+        else throw new Error "Unexpected #{ port.peek() }"
 
-skip_whitespace = (string, ctx) ->
-    while /^\w/.test(string)
-        string = string.slice(1)
+lookahead = (port) ->
+    port.skipWhitespace()
 
-    ctx string, null
+    char = port.peek()
+    keys =
+        open:   /\(/
+        close:  /\)/
+        letter: /[a-zA-Z_]/
+        number: /\d/
 
-read_list = (string, ctx) ->
+    for name, pattern of keys
+        return name if pattern.test char
+
+    throw new Error "Unexpected character: #{ char }"
+
+read_list = (port) ->
     list = []
-    while lookahead(string) != 'close'
-        list.push(read_sexp string, (d) -> d)
+    port.skip() # skip the '('
+    while lookahead(port) != 'close'
+        list.push(read_sexp port)
 
-    ctx string, list
+    port.skip() # skip the ')'
+    list
 
-read_number = (string, ctx) ->
-    pattern = /\d\.?\d*/
-    match   = pattern.exec string
+read_number = (port) ->
+    Number port.match /\d+\.?\d*/
 
-    ctx string.slice(pattern.lastIndex), match[0]
+read_symbol = (port) ->
+    port.match ///
+        [a-z_]
+        ([a-z] | [-_+=!?#%^~*<>:&/\\])+
+    ///
+
+exports.Port = Port
+exports.read_sexp = read_sexp
+exports.read_number = read_number
+exports.read_symbol = read_symbol
+exports.read_list = read_list
+exports.lookahead = lookahead

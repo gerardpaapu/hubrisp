@@ -59,7 +59,8 @@ we should be able to replace it with the comma ',' operator
     ;--------------------------
 
     var a, _b;
-    a = ((_b = 5), (_b * _b * _b));
+    a = ((_b = 5),
+         (_b * _b * _b));
 
 Inlining Function Calls
 -----------------------
