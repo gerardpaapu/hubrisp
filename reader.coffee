@@ -40,26 +40,24 @@ class Port
 
     isEmpty: -> @string.length <= @position
 
-read_sexp = (port) ->
-    switch lookahead(port)
-        when 'open'   then read_list port
-        when 'letter' then read_symbol port
-        when 'number' then read_number port
-        when 'this'   then read_this port
-        when 'arguments'  then read_arguments port
-        when 'short_fun'  then read_short_fun port
-        when 'quote'      then read_quote port
-        when 'quasiquote' then read_quasiquote port
-        when 'unquote'    then read_unquote port
-        when 'key'        then read_key port
-        when '<eof>'      then null
-        else throw new Error "Unexpected #{ port.peek() }"
+class Reader
+    constructor: (string) ->
+        @port = new Port string
 
-lookahead = (port) ->
-    port.skipWhitespace()
+    lookahead: ->
+        @port.skipWhitespace()
 
-    char = port.peek()
-    keys =
+        if @port.isEmpty()
+            return '<eof>'
+
+        char = @port.peek()
+
+        for name, pattern of @lookaheadTable
+            return name if pattern.test char
+
+        throw new Error "Unexpected character during lookahead: #{ char }"
+
+    lookaheadTable:
         open:        /\(/
         close:       /\)/
         letter:      /[a-zA-Z_]/
@@ -72,40 +70,50 @@ lookahead = (port) ->
         unquote:     /,/
         key:         /:/
 
-    if port.isEmpty()
-        return '<eof>'
+    read_sexp: ->
+        switch @lookahead()
+            when 'open'   then @read_list()
+            when 'letter' then @read_symbol()
+            when 'number' then @read_number()
+            when 'this'   then @read_this()
+            when 'arguments'  then @read_arguments()
+            when 'short_fun'  then @read_short_fun()
+            when 'quote'      then @read_quote()
+            when 'quasiquote' then @read_quasiquote()
+            when 'unquote'    then @read_unquote()
+            when 'key'        then @read_key()
+            when '<eof>'      then null
+            else throw new Error "Unexpected #{ @port.peek() }"
 
-    for name, pattern of keys
-        return name if pattern.test char
+    read_list: ->
+        @read_brackets '(', ')'
 
-    throw new Error "Unexpected character: #{ char }"
+    read_array: ->
+        ["js:array", @read_brackets '[', ']']
 
-read_list = (port) ->
-    list = []
-    port.skip() # skip the '('
-    while lookahead(port) != 'close'
-        if port.isEmpty()
-            throw new Error 'Unexpected EOF'
+    read_brackets: (start, stop) ->
+        list = []
 
-        list.push(read_sexp port)
+        @assert start
 
-    port.skip() # skip the ')'
-    list
+        while @lookahead() != stop
+           if @port.isEmpty()
+               throw new Error 'Unexpected EOF'
 
-read_array = (port) ->
-    arr = []
-    port.skip() # skip the '['
-    while lookahead(port) != 'close'
-        if port.isEmpty()
-            throw new Error 'Unexpected EOF'
+           list.push @read_sexp()
 
-        list.push(read_sexp port)
+        @assert stop
 
-    port.skip() # skip the ']'
-    list
+        list
 
-read_number = (port) ->
-    Number port.match number_pattern
+    assert: (symbol) ->
+        unless @lookahead() is symbol
+            throw new Error "Expected #{ symbol }, got #{ @lookahead() }"
+
+        @port.skip()
+
+read_number: ->
+    Number @port.match number_pattern
 
 read_arguments = (port) ->
     port.skip() # skip '%'
@@ -153,11 +161,13 @@ number_pattern = ///
         \d+          # any number of other digite
     )?
     (
-        (e|E)
+        (e|E)        # optionally a power of 10
         (\+|\-)
         \d+
     )?
     ///
+
+
 exports.Port = Port
 exports.read_sexp = read_sexp
 exports.read_number = read_number
