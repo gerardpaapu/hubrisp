@@ -1,3 +1,12 @@
+# TODO
+# - Wrap the whole reader thing in a context object
+# - Read square brackets as Array literals
+# - Read curlies as object literals
+# - Implement reading numbers to the JSON standard
+# - Implement reading string to the JSON standard
+# - Change unquote to something else so that ',' can be whitespace
+# - Assert all the bits that I'm skipping e.g. closing brackets
+
 class Port
     constructor: (@string, @position=0) ->
 
@@ -42,6 +51,7 @@ read_sexp = (port) ->
         when 'quote'      then read_quote port
         when 'quasiquote' then read_quasiquote port
         when 'unquote'    then read_unquote port
+        when 'key'        then read_key port
         when '<eof>'      then null
         else throw new Error "Unexpected #{ port.peek() }"
 
@@ -53,13 +63,14 @@ lookahead = (port) ->
         open:        /\(/
         close:       /\)/
         letter:      /[a-zA-Z_]/
-        number:      /\d/
+        number:      number_pattern
         'this':      /\@/
         'arguments': /%/
         short_fun:   /#/
         quote:       /'/
         quasiquote:  /`/
         unquote:     /,/
+        key:         /:/
 
     if port.isEmpty()
         return '<eof>'
@@ -81,8 +92,20 @@ read_list = (port) ->
     port.skip() # skip the ')'
     list
 
+read_array = (port) ->
+    arr = []
+    port.skip() # skip the '['
+    while lookahead(port) != 'close'
+        if port.isEmpty()
+            throw new Error 'Unexpected EOF'
+
+        list.push(read_sexp port)
+
+    port.skip() # skip the ']'
+    list
+
 read_number = (port) ->
-    Number port.match /\d+\.?\d*/
+    Number port.match number_pattern
 
 read_arguments = (port) ->
     port.skip() # skip '%'
@@ -112,8 +135,29 @@ read_short_fun = (port) ->
     ["js:function", [], read_sexp port]
 
 read_symbol = (port) ->
-    port.match /([a-z-_+=!?^~*<>:&\/\\])+/
+    port.match /[a-z-_+=!?^~*<>:&\/\\]+/
 
+read_key = (port) ->
+    port.skip() # skip ':'
+    ["key", read_symbol port]
+
+
+number_pattern = ///
+    -?               # negative?
+    (
+        0 |          # leading 0
+        ([1-9]\d*)   # or any number of other digits
+    )
+    (
+        \.           # decimal point followed by
+        \d+          # any number of other digite
+    )?
+    (
+        (e|E)
+        (\+|\-)
+        \d+
+    )?
+    ///
 exports.Port = Port
 exports.read_sexp = read_sexp
 exports.read_number = read_number

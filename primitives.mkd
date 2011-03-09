@@ -1,70 +1,79 @@
 The flow for me, seems like it's going to be 
 
-    read --+--> macro expand --> module/id resolution -+--> optimization --> emit-js
-           |                                        |
-           `----------<----------<---------<--------'
+read
+--
+string -> sexp
 
-    (require :quux) ; the module :quux provides foo
+Read a string representing the program/module 
 
-    (set! foo.bar "baz")
+datum->syntax
+--
+sexp, env -> syntax
 
-    ;------------------------------------------------
+Load base environment and module environment, 
 
-    (h:require :quux (foo foo))
+syntax-expand
+--
+syntax, env -> primitive-syntax
 
-    (js:set! (js:subscript foo :bar) "baz")
+For each form (syntax-expander ...), apply the syntax-expander
+recursively until the form doesn't contain any applications where the
+head is a syntax-expander.
 
-    ;-------------------------------------------------
+contextualize
+--
 
-    var _gen, foo;
-    _gen = Hubrisp.require("quux");
-    foo  = _gen.provides['foo'];
+primitive-syntax -> dumb-primitive-syntax
 
-    foo['bar'] = 'baz'; // wait... why am I mutating another module again?
+contextualize will convert forms to be appropriate for their 
+returning context i.e. either 'return', 'expression' or 'statement'
 
-
-
-// string -> sexp
-read_sexp: function () {
-    ...
-}
-
-// syntaxify: string, env -> syntax
-// transform the sexp and it's children into 
-// corresponding syntax objects
-//
-// literal -> literal
-// symbol  -> qualified_identifier
-// list    -> application  
-read_syntax: function (string, env) {
-    var sexp = read_sexp(string);
-    ...
-    return stx;
-}
-
-// syntax, env -> primitive_syntax
-// 
-// primitive_syntax is
-// an application of the form (primitive_syntax ...)
-// or a fully qualified identifier to a value of type js:Form
-// or a javascript-safe literal
-// 
-// every js:Form has a direct translation to
-// JavascriptString defined
-// 
-// e.g. (js:if test true_branch false_branch)
-//
-//      if (#{ compile test}) {
-//         #{ compile true_branch }
-//      } else { 
-//         #{ compile false_branch }
-//      }
-
-syntax_expand: function (stx, env) {
+For example what `while` might look like...
     
-}
+in statement context: 
 
-// primitive_syntax -> JavascriptString
-emit_js: function () {
+    ;; `test` is compiled in expression context
+    ;; `tail` and each `body` is compiled in statement-context
 
-} 
+    (js:while test
+        body
+        ...
+        tail)
+
+in expression context: 
+    
+    ;; `test` and `tail` are compiled in expression context
+    ;; each `body` is compiled in statement-context
+    ((js:function ()
+        (js:var _ref)
+        (js:set! _ref [])
+        (js:while test
+            body 
+            ...
+            (_ref.push tail))
+        (js:return _ref)))
+
+in return context:
+    
+    (js:var _ref ...) ;; `_ref` is a gensym, declared at the
+                      ;; top of the containing scope
+
+    ;; ... the rest of the  containing scope
+
+    ;; `test` and `tail` are compiled in expression contexts
+    ;; each `body` is compiled in statement contexts
+
+    (js:set! _ref [])
+    (js:while test   
+        body 
+        ...     
+        (_ref.push tail))
+    (js:return _ref) 
+
+emit-js
+--
+dumb-primitive-syntax -> js-string
+
+at this point the tree should contain only Hubrisp.Primitives and
+Javascript values all of which should transform to strings
+representing javascript with the minimum of fuss.
