@@ -1,3 +1,13 @@
 In theory, I'm attempting to write a practical lisp for "the javascript platform", you can read manifesto.mkd if you're that way inclined.
 
 There's fuck all code there, because... I don't know how to write a compiler... but I won't let that stop me right? I've got the dragon book and lisp in small pieces NOTHING CAN STOP ME.
+
+UPDATE:
+
+... nobody's reading this right?
+
+So I've **kind of** got a reader **mostly** working, reading strings into Javascript Arrays, Strings and Numbers with most of the silly features I talk about in the manifesto.
+
+I still have no idea how I'm going to implement hygenic macros, I'm reading jscreme (scheme in js) and heist (scheme in ruby), I think I'll probably have a look at the clojure macroexpand-1 and its friend in las3r.
+
+I also think I'm going to define a lispy syntax without macros or any other smart features to be the target language and write a compiler from **that** to javascript (I may even do that for a few of the intermediary stages).
