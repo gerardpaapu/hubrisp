@@ -1,20 +1,15 @@
-{Port, read_number, read_symbol, read_sexp, read_list, lookahead} = require './reader.js'
+{read} = require './reader.js'
 
-_ = (fn, str) ->
-    console.log JSON.stringify fn new Port str
+_ = (str) ->
+    console.log JSON.stringify read str
 
-_ lookahead, "("
-_ lookahead, ")"
-_ lookahead, "lol"
-_ lookahead, "4.5"
-
-_ read_number, "3234.2"
-_ read_number, "-3234.2e+10"
-_ read_number, "0.2e-23"
-_ read_symbol, "pasihusd"
-_ read_list, "(1 2 3 4)"
-_ read_list, "(foo lol (2 3) (butts 69))"
-_ read_list, "(set! @lol #(sum % %4))"
-_ read_sexp, "`(,(foo bar) baz (1 ,b 3))"
-_ read_sexp, "(js:ref @omg :cats)"
-
+_ "3234.2"
+_ "-3234.2e+10"
+_ "0.2e-23"
+_ "pasihusd"
+_ "(1 2 3 4)"
+_ "(foo lol (2 3) (butts 69))"
+_ "(set! @lol #(+ % %4))"
+_ "`(~(foo bar) baz (1 ~b 3))"
+_ "(js:ref @omg :cats)"
+_ "{ :lol 5, :omg 666 }"

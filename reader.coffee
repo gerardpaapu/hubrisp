@@ -1,11 +1,11 @@
 # TODO
-# - Wrap the whole reader thing in a context object
-# - Read square brackets as Array literals
-# - Read curlies as object literals
-# - Implement reading numbers to the JSON standard
+# - Start an actual test suite for the reader
 # - Implement reading string to the JSON standard
-# - Change unquote to something else so that ',' can be whitespace
 # - Assert all the bits that I'm skipping e.g. closing brackets
+
+regexes =
+    symbol: /[a-z-_+=!?^*<>&\/\\]+/
+    number: /-?(0|([1-9]\d*))(\.\d+)?((e|E)(\+|\-)\d+)?/
 
 class Port
     constructor: (@string, @position=0) ->
@@ -36,7 +36,13 @@ class Port
         else
             null
 
-    skipWhitespace: -> @match /\s+/
+    test: (p) ->
+        string  = @string[@position..]
+        pattern = new RegExp "^#{p.source}"
+
+        pattern.test string
+
+    skipWhitespace: -> @match /(\s|,)+/
 
     isEmpty: -> @string.length <= @position
 
@@ -50,30 +56,34 @@ class Reader
         if @port.isEmpty()
             return '<eof>'
 
-        char = @port.peek()
-
         for name, pattern of @lookaheadTable
-            return name if pattern.test char
+            return name if @port.test pattern
 
         throw new Error "Unexpected character during lookahead: #{ char }"
 
     lookaheadTable:
-        open:        /\(/
-        close:       /\)/
-        letter:      /[a-zA-Z_]/
-        number:      number_pattern
+        number:      regexes.number
+        symbol:      regexes.symbol
+        '(':         /\(/
+        ')':         /\)/
+        '[':         /\[/
+        ']':         /\]/
+        '{':         /\{/
+        '}':         /\}/
         'this':      /\@/
         'arguments': /%/
         short_fun:   /#/
         quote:       /'/
         quasiquote:  /`/
-        unquote:     /,/
+        unquote:     /~/
         key:         /:/
 
     read_sexp: ->
         switch @lookahead()
-            when 'open'   then @read_list()
-            when 'letter' then @read_symbol()
+            when '('   then @read_list()
+            when '['   then @read_array()
+            when '{'   then @read_dict()
+            when 'symbol' then @read_symbol()
             when 'number' then @read_number()
             when 'this'   then @read_this()
             when 'arguments'  then @read_arguments()
@@ -90,6 +100,9 @@ class Reader
 
     read_array: ->
         ["js:array", @read_brackets '[', ']']
+
+    read_dict: ->
+        ["js:dict", @read_brackets '{', '}']
 
     read_brackets: (start, stop) ->
         list = []
@@ -112,65 +125,48 @@ class Reader
 
         @port.skip()
 
-read_number: ->
-    Number @port.match number_pattern
+    read_number: ->
+        Number @port.match regexes.number
 
-read_arguments = (port) ->
-    port.skip() # skip '%'
-    if /\d/.test port.peek()
-        ["js:arguments", Number port.match /\d+/]
-    else
-        ["js:arguments", 0 ]
+    read_arguments: ->
+        @port.skip() # skip '%'
 
-read_this = (port) ->
-    port.skip() # skip '@'
-    [ "js:this", read_symbol port ]
+        if /\d/.test @port.peek()
+            ["js:arguments", Number @port.match /\d+/]
+        else
+            ["js:arguments", 0 ]
 
-read_quote = (port) ->
-    port.skip() # skip '''
-    [ "quote", read_sexp port ]
+    read_this: ->
+        @port.skip() # skip '@'
+        [ "js:this", @read_symbol() ]
 
-read_unquote = (port) ->
-    port.skip() # skip ','
-    [ "unquote", read_sexp port ]
+    read_quote: ->
+        @port.skip() # skip '''
+        [ "quote", @read_sexp() ]
 
-read_quasiquote = (port) ->
-    port.skip() # skip '`'
-    [ "quasiquote", read_sexp port ]
+    read_unquote: ->
+        @port.skip() # skip '~'
+        [ "unquote", @read_sexp() ]
 
-read_short_fun = (port) ->
-    port.skip() # skip '#'
-    ["js:function", [], read_sexp port]
+    read_quasiquote: ->
+        @port.skip() # skip '`'
+        [ "quasiquote", @read_sexp() ]
 
-read_symbol = (port) ->
-    port.match /[a-z-_+=!?^~*<>:&\/\\]+/
+    read_short_fun: ->
+        @port.skip() # skip '#'
+        ["js:function", [], @read_sexp() ]
 
-read_key = (port) ->
-    port.skip() # skip ':'
-    ["key", read_symbol port]
+    read_symbol: ->
+        @port.match regexes.symbol
+
+    read_key: ->
+        @port.skip() # skip ':'
+        ["key", @read_symbol() ]
 
 
-number_pattern = ///
-    -?               # negative?
-    (
-        0 |          # leading 0
-        ([1-9]\d*)   # or any number of other digits
-    )
-    (
-        \.           # decimal point followed by
-        \d+          # any number of other digite
-    )?
-    (
-        (e|E)        # optionally a power of 10
-        (\+|\-)
-        \d+
-    )?
-    ///
-
+exports.read = (string) ->
+    new Reader(string).read_sexp()
 
 exports.Port = Port
-exports.read_sexp = read_sexp
-exports.read_number = read_number
-exports.read_symbol = read_symbol
-exports.read_list = read_list
-exports.lookahead = lookahead
+exports.Reader = Reader
+exports.regexes = regexes
