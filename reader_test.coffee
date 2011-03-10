@@ -13,3 +13,4 @@ _ "(set! @lol #(+ % %4))"
 _ "`(~(foo bar) baz (1 ~b 3))"
 _ "(js:ref @omg :cats)"
 _ "{ :lol 5, :omg 666 }"
+_ '(lol "this is a fraggin string \\"ok\\"" 3.5)'
