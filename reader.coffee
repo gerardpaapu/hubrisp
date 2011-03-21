@@ -158,34 +158,34 @@ class Reader
         if /\d/.test @port.peek()
             ["js:arguments", Number @port.match /\d+/]
         else
-            ["js:arguments", 0 ]
+            ["js:arguments", 0]
 
     read_this: ->
         @port.skip() # skip '@'
-        [ "js:this", @read_symbol() ]
+        ["js:this", @read_symbol()]
 
     read_quote: ->
         @port.skip() # skip '''
-        [ "quote", @read_sexp() ]
+        ["quote", @read_sexp()]
 
     read_unquote: ->
         @port.skip() # skip '~'
-        [ "unquote", @read_sexp() ]
+        ["unquote", @read_sexp()]
 
     read_quasiquote: ->
         @port.skip() # skip '`'
-        [ "quasiquote", @read_sexp() ]
+        ["quasiquote", @read_sexp()]
 
     read_short_fun: ->
         @port.skip() # skip '#'
-        [ "js:function", [], @read_sexp() ]
+        ["js:function", [], @read_sexp()]
 
     read_symbol: ->
         @port.match regexes.symbol
 
     read_key: ->
         @port.skip() # skip ':'
-        ["key", @read_symbol() ]
+        ["key", @read_symbol()]
 
     read_string: ->
         str = ""

@@ -1,0 +1,28 @@
+(with-handlers ([type exp]
+                ...)
+  body
+  ...)
+
+(js:try/catch err 
+    (begin
+        body
+        ...)
+    (cond [(Type.check type err) exp] 
+          ...
+          [else ]))
+        
+
+(function () {
+    try {
+        body
+        ...
+    } catch (err) {
+        if (Type.check(type, err)) {
+            return exp;
+        }
+
+        ...
+
+        throw err;
+    }
+});
