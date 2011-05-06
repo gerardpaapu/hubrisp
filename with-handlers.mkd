@@ -9,7 +9,7 @@
         ...)
     (cond [(Type.check type err) exp] 
           ...
-          [else ]))
+          [else (js:throw err)]))
         
 
 (function () {

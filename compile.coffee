@@ -18,7 +18,7 @@ compile_special_form = (stx) ->
 
         when "js:if"
 
-            "(#{compile tail[0]}?#{compile tail[1]}:#{compile tail[2]})"
+            "(#{compile tail[0]} ? #{compile tail[1]} : #{compile tail[2]})"
 
         when "js:throw"
 
@@ -36,7 +36,7 @@ compile_special_form = (stx) ->
 
             "(function () { 
                 #{compile_function_body tail} 
-            }())"
+            }.call(this))"
 
         when "js:expr"
 
@@ -48,7 +48,15 @@ compile_special_form = (stx) ->
         when "js:try/catch"
 
             "try {
-        } catch 
+                #{compile tail[1]}
+            } catch (#{compile_symbol tail[0]}) {
+                #{compile tail[2]}
+            }"
+
+        when "js:return"
+
+            "return #{ compile_expressions(tail).join ', ' };"
+
 
 compile_function_body = (stx) ->
     [body..., tail] = stx

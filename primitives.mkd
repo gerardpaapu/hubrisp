@@ -20,59 +20,13 @@ For each form (syntax-expander ...), apply the syntax-expander
 recursively until the form doesn't contain any applications where the
 head is a syntax-expander.
 
-contextualize
---
-
-primitive-syntax -> dumb-primitive-syntax
-
-contextualize will convert forms to be appropriate for their 
-returning context i.e. either 'return', 'expression' or 'statement'
-
-For example what `while` might look like...
-    
-in statement context: 
-
-    ;; `test` is compiled in expression context
-    ;; `tail` and each `body` is compiled in statement-context
-
-    (js:while test
-        body
-        ...
-        tail)
-
-in expression context: 
-    
-    ;; `test` and `tail` are compiled in expression context
-    ;; each `body` is compiled in statement-context
-    ((js:function ()
-        (js:var _ref)
-        (js:set! _ref [])
-        (js:while test
-            body 
-            ...
-            (_ref.push tail))
-        (js:return _ref)))
-
-in return context:
-    
-    (js:var _ref ...) ;; `_ref` is a gensym, declared at the
-                      ;; top of the containing scope
-
-    ;; ... the rest of the  containing scope
-
-    ;; `test` and `tail` are compiled in expression contexts
-    ;; each `body` is compiled in statement contexts
-
-    (js:set! _ref [])
-    (js:while test   
-        body 
-        ...     
-        (_ref.push tail))
-    (js:return _ref) 
+Part of this is contextualizing the core-hubrisp operators to compile in
+either return, expression or statement context. As (not really) described
+in `context.mkd`.
 
 emit-js
 --
-dumb-primitive-syntax -> js-string
+primitive-syntax -> js-string
 
 at this point the tree should contain only Hubrisp.Primitives and
 Javascript values all of which should transform to strings
