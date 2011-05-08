@@ -1,0 +1,49 @@
+(lambda (arg)
+    foo
+    bar
+    baz)
+
+(js:function ((context:symbol arg))
+    (context:statement foo)
+    (context:statement bar)
+    (context:return baz)) 
+
+(context:expression
+    (if a b c))
+
+(context:return
+    (if a b c))
+
+(js:if/exp (context:expression a)
+   (context:expression b)
+   (context:expression c))
+
+(context:statement
+    (if a b c))
+
+(js:if (context:expression a)
+    (context:statement b)
+    (context:statement c))
+
+(foo bar baz) ; a function call
+
+((context:expression foo)
+ (context:expression bar)
+ (context:expression baz))
+
+(context:expression
+    (while foo bar baz))
+
+(let ((acc []))
+    (js:while (context:expression foo)
+        (context:statement bar)
+        (acc.push (context:expression baz)))
+    (context:expression acc))
+
+(context:statement
+    (while foo bar baz))
+
+(js:while (context:expression foo)
+    (context:statement bar)
+    (context:statement baz))
+
