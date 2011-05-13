@@ -102,7 +102,8 @@ class Reader
         @read_sexp() until @lookahead() is '<eof>'
 
     read_sexp: ->
-        switch @lookahead()
+        position = {line, col} = @port
+        sexp = switch @lookahead()
             when '('   then @read_list()
             when '['   then @read_array()
             when '{'   then @read_dict()
@@ -118,6 +119,9 @@ class Reader
             when 'key'        then @read_key()
             when '<eof>'      then null
             else throw new Error "Unexpected #{ @port.peek() } at #{ @port.report() }"
+
+        sexp.position = position
+        sexp
 
     read_list: ->
         @read_brackets '(', ')'

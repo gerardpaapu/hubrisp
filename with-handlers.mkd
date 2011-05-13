@@ -25,4 +25,4 @@
 
         throw err;
     }
-});
+}.call(this));

@@ -28,6 +28,6 @@ emit-js
 --
 primitive-syntax -> js-string
 
-at this point the tree should contain only Hubrisp.Primitives and
+At this point the tree should contain only Hubrisp.Primitives and
 Javascript values all of which should transform to strings
 representing javascript with the minimum of fuss.

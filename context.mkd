@@ -15,8 +15,8 @@
     (if a b c))
 
 (js:if/exp (context:expression a)
-   (context:expression b)
-   (context:expression c))
+    (context:expression b)
+    (context:expression c))
 
 (context:statement
     (if a b c))
