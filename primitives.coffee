@@ -1,3 +1,5 @@
+{Primitive, SyntaxError, Identifier} = Hubrisp
+
 keyword = (str) -> 
     new Primitive (body) ->
         unless body.length is 0 throw new SyntaxError body.location
@@ -137,6 +139,8 @@ p['js:ref'] = new Primitive (body) ->
     "#{ obj.compile() }[#{ key.compile() }]"   
 
 p['js:dot'] = new Primitive (body) ->
+    # probably instead of dealing with Identifiers at this point
+    # they should by quoted into symbols or strings earlier
     unless body.length >= 2 throw new SyntaxError body.location
 
     unless Type.ArrayOf( Identifier ).check( body )
@@ -162,7 +166,8 @@ p['js:dict'] = new Primitive (body) ->
         
     entries = while i < len
         [ key, value ] = body[i..] 
-
+        # probably instead of dealing with Identifiers at this point
+        # they should by quoted into symbols or strings earlier
         unless key instanceof Identifier throw new SyntaxError key.location
 
         "\"#{ body[i].getSymbol() }\":#{ body[i + 1].compile() }"
